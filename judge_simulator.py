@@ -22,14 +22,16 @@ Author: magicpin AI Challenge Team
 # ██████  CONFIGURATION - EDIT THIS SECTION ██████
 # =============================================================================
 
+import os
+
 # Your bot's URL (where your bot is running)
 BOT_URL = "http://127.0.0.1:8000"
 
 # Choose your LLM provider: "openai", "anthropic", "gemini", "deepseek", "groq", "ollama", "openrouter"
 LLM_PROVIDER = "gemini"
 
-# Your API key (paste your key here)
-LLM_API_KEY = "AIzaSyAua3Ho2e9IJibsny7r4mtTvmLfOSnCdDU"
+# Set this in the environment; never commit provider credentials.
+LLM_API_KEY = os.getenv("VERA_JUDGE_LLM_API_KEY", "")
 # Model to use (leave empty for default, or specify like "gpt-4o", "claude-3-5-sonnet-20241022", etc.)
 LLM_MODEL = "gemini-3.6-flash"  # <-- Optional: specify model or leave empty for default
 
@@ -43,12 +45,10 @@ TEST_SCENARIO = "all"
 # ██████  END OF CONFIGURATION - DON'T EDIT BELOW THIS LINE ██████
 # =============================================================================
 
-import os
 import sys
 import json
 import time
 import re
-import socket
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Tuple
@@ -56,7 +56,6 @@ from pathlib import Path
 from urllib import request as urlrequest, error as urlerror
 from abc import ABC, abstractmethod
 import urllib
-from weakref import ref
 
 
 # Constants

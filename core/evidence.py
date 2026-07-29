@@ -22,9 +22,9 @@ class EvidenceCollector:
         # Merchant Evidence
         # ---------------------------
 
-        identity = merchant.get("identity", {})
-        performance = merchant.get("performance", {})
-        aggregate = merchant.get("customer_aggregate", {})
+        identity = merchant.get("identity") or {}
+        performance = merchant.get("performance") or {}
+        aggregate = merchant.get("customer_aggregate") or {}
 
         evidence["merchant_name"] = identity.get("name")
         evidence["owner_name"] = identity.get("owner_first_name")
@@ -33,7 +33,7 @@ class EvidenceCollector:
 
         evidence["verified"] = identity.get("verified", False)
 
-        evidence["signals"] = merchant.get("signals", [])
+        evidence["signals"] = merchant.get("signals") or []
 
         evidence["offers"] = [
             offer
@@ -43,12 +43,9 @@ class EvidenceCollector:
 
         evidence["has_active_offer"] = len(evidence["offers"]) > 0
 
-        evidence["review_themes"] = merchant.get("review_themes", [])
+        evidence["review_themes"] = merchant.get("review_themes") or []
 
-        evidence["conversation_history"] = merchant.get(
-            "conversation_history",
-            []
-        )
+        evidence["conversation_history"] = merchant.get("conversation_history") or []
 
         evidence["merchant_engaged"] = any(
             item.get("engagement", "").startswith("merchant")
@@ -66,9 +63,9 @@ class EvidenceCollector:
 
         if customer:
 
-            identity = customer.get("identity", {})
-            relationship = customer.get("relationship", {})
-            preferences = customer.get("preferences", {})
+            identity = customer.get("identity") or {}
+            relationship = customer.get("relationship") or {}
+            preferences = customer.get("preferences") or {}
 
             evidence["customer_name"] = identity.get("name")
             evidence["language"] = identity.get("language_pref")
@@ -128,34 +125,19 @@ class EvidenceCollector:
 
         evidence["category_slug"] = category.get("slug")
 
-        voice = category.get("voice", {})
+        voice = category.get("voice") or {}
 
         evidence["tone"] = voice.get("tone")
 
-        evidence["offer_catalog"] = category.get(
-            "offer_catalog",
-            []
-        )
+        evidence["offer_catalog"] = category.get("offer_catalog") or []
 
-        evidence["digest"] = category.get(
-            "digest",
-            []
-        )
+        evidence["digest"] = category.get("digest") or []
 
-        evidence["peer_stats"] = category.get(
-            "peer_stats",
-            {}
-        )
+        evidence["peer_stats"] = category.get("peer_stats") or {}
 
-        evidence["seasonal_beats"] = category.get(
-            "seasonal_beats",
-            []
-        )
+        evidence["seasonal_beats"] = category.get("seasonal_beats") or []
 
-        evidence["trend_signals"] = category.get(
-            "trend_signals",
-            []
-        )
+        evidence["trend_signals"] = category.get("trend_signals") or []
 
         # ---------------------------
         # Derived Evidence

@@ -94,36 +94,13 @@ class DecisionEngine:
                 "evidence": []
             }
 
-        priority = self.PRIORITY_MAP.get(
-            trigger.get("urgency", 3),
-            "medium"
-        )
+        priority = self.PRIORITY_MAP.get(trigger.get("urgency", 3), "medium")
 
         evidence = context.get("evidence", {})
 
-        reasons = [kind]
-
-        if evidence.get("merchant_engaged"):
-            reasons.append("merchant_recently_engaged")
-
-        if evidence.get("has_active_offer"):
-            reasons.append("active_offer_available")
-
-        if evidence.get("verified"):
-            reasons.append("verified_business")
-
-        if evidence.get("value_bucket") == "vip":
-            reasons.append("vip_customer")
-
         strategy = self.STRATEGY_MAP.get(kind, "inform")
-
-        cta_style = "direct"
-
-        if evidence.get("merchant_engaged"):
-            cta_style = "collaborative"
-
-        if priority == "critical":
-            cta_style = "urgent"
+        reasons = self._reasons(kind, evidence)
+        cta_style = self._cta_style(priority, evidence)
 
         return {
 
@@ -145,3 +122,27 @@ class DecisionEngine:
 
             "evidence": evidence.get("facts", [])
         }
+
+    def _reasons(self, kind, evidence):
+        reasons = [kind]
+        signals = (
+            ("merchant_engaged", "merchant_recently_engaged"),
+            ("has_active_offer", "active_offer_available"),
+            ("verified", "verified_business"),
+        )
+
+        for field, reason in signals:
+            if evidence.get(field):
+                reasons.append(reason)
+
+        if evidence.get("value_bucket") == "vip":
+            reasons.append("vip_customer")
+
+        return reasons
+
+    def _cta_style(self, priority, evidence):
+        if priority == "critical":
+            return "urgent"
+        if evidence.get("merchant_engaged"):
+            return "collaborative"
+        return "direct"

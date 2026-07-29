@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 
 class MessageGenerator:
@@ -21,81 +21,29 @@ class MessageGenerator:
         if summary:
             lines.append(f"\n{summary}")
 
-        evidence = plan.get("evidence", {})
-        facts = self._select_facts(evidence, plan)
+        facts = self._render_facts(plan.get("facts", []))
 
         for sentence in facts:
             lines.append(sentence)
 
         cta = plan.get("cta") or "Take action"
-        lines.append(f"\n{cta}.")
+        cta_text = f"{cta}."
+        lines.append(f"\n{cta_text}")
 
         message = " ".join(lines)
-        return self._enforce_limits(message)
+        return self._enforce_limits(message, cta_text)
 
-    def _select_facts(self, evidence: Dict, plan: Dict) -> List[str]:
-        selected: List[Tuple[str, str]] = []
-        trigger_payload = evidence.get("trigger_payload", {})
-        performance = evidence.get("performance", {})
-        offers = evidence.get("offers") or []
+    def _render_facts(self, facts: List[str]) -> List[str]:
+        return [
+            f"{fact} This makes it worth acting on now."
+            for fact in facts[:3]
+        ]
 
-        if evidence.get("has_active_offer") and offers:
-            offer = offers[0]
-            price = (
-                offer.get("price")
-                or offer.get("offer_price")
-                or offer.get("discount_price")
-            )
-            if price:
-                selected.append((
-                    f"You already have an active offer at ₹{price}.",
-                    "That gives you a ready promotion to use now."
-                ))
-
-        if performance.get("views"):
-            selected.append((
-                f"Your listing recently attracted {performance['views']} visits.",
-                "That suggests there is still demand to capture."
-            ))
-
-        if performance.get("ctr") is not None:
-            selected.append((
-                f"Your current response rate is {performance['ctr']}.",
-                "A small improvement can help turn more attention into customers."
-            ))
-
-        topic = (
-            trigger_payload.get("keyword")
-            or trigger_payload.get("topic")
-            or trigger_payload.get("service")
-            or trigger_payload.get("festival")
-        )
-        if topic:
-            selected.append((
-                f"Nearby demand around {topic} is rising.",
-                "That makes this a strong moment to act."
-            ))
-
-        if evidence.get("customer_name"):
-            selected.append((
-                f"It is time for {evidence['customer_name']}'s next appointment.",
-                "A timely reminder can improve attendance."
-            ))
-
-        if not selected and plan.get("summary"):
-            selected.append((
-                plan["summary"],
-                "This is worth acting on now."
-            ))
-
-        items = []
-        for fact, why in selected[:3]:
-            items.append(f"{fact} {why}")
-
-        return items
-
-    def _enforce_limits(self, message: str) -> str:
+    def _enforce_limits(self, message: str, cta: str) -> str:
         words = message.split()
         if len(words) > 100:
-            return " ".join(words[:95]).rstrip() + "..."
+            cta_words = len(cta.split())
+            body_limit = max(1, 100 - cta_words - 1)
+            body = " ".join(words[:body_limit]).rstrip(" .,;:")
+            return f"{body}... {cta}"
         return message

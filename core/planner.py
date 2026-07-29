@@ -21,7 +21,6 @@ class Planner:
         evidence: Dict
     ):
 
-        merchant = context.get("merchant", {})
         customer = context.get("customer") or {}
         trigger = context.get("trigger", {})
 
@@ -48,6 +47,14 @@ class Planner:
             "opening": self._opening(
                 evidence,
                 customer
+            ),
+
+            "personalization": self._personalization(
+                evidence
+            ),
+
+            "message_flow": self._message_flow(
+                decision
             ),
 
             "summary": self._summary(
@@ -143,6 +150,26 @@ class Planner:
 
         return f"Hi {identity.get('name','there')},"
 
+    def _personalization(self, evidence):
+        details = []
+
+        if evidence.get("customer_name"):
+            details.append(f"Address the customer as {evidence['customer_name']}.")
+        elif evidence.get("owner_name"):
+            details.append(f"Address the merchant as {evidence['owner_name']}.")
+
+        if evidence.get("category_slug"):
+            details.append(f"Keep the message relevant to {evidence['category_slug']}.")
+
+        return details
+
+    def _message_flow(self, decision):
+        return [
+            "Open with the relevant context.",
+            "Explain the selected facts clearly.",
+            f"Close with a {decision.get('cta_style', 'direct')} call to action."
+        ]
+
     # --------------------------------------------------
 
     def _summary(
@@ -198,9 +225,7 @@ class Planner:
                     scored_facts.append(
                         self._score_fact(
                             str(item),
-                            key,
                             evidence,
-                            payload,
                             decision
                         )
                     )
@@ -208,9 +233,7 @@ class Planner:
                 scored_facts.append(
                     self._score_fact(
                         f"{key.replace('_',' ').title()}: {value}",
-                        key,
                         evidence,
-                        payload,
                         decision
                     )
                 )
@@ -220,9 +243,7 @@ class Planner:
             scored_facts.append(
                 self._score_fact(
                     f"Your listing recently attracted {performance['views']} visits.",
-                    "performance",
                     evidence,
-                    payload,
                     decision
                 )
             )
@@ -231,9 +252,7 @@ class Planner:
             scored_facts.append(
                 self._score_fact(
                     f"Your current response rate is {performance['ctr']}.",
-                    "performance",
                     evidence,
-                    payload,
                     decision
                 )
             )
@@ -242,9 +261,7 @@ class Planner:
             scored_facts.append(
                 self._score_fact(
                     "Merchant currently has active offers.",
-                    "offer",
                     evidence,
-                    payload,
                     decision
                 )
             )
@@ -253,9 +270,7 @@ class Planner:
             scored_facts.append(
                 self._score_fact(
                     "Merchant recently interacted with Vera.",
-                    "engagement",
                     evidence,
-                    payload,
                     decision
                 )
             )
@@ -282,9 +297,7 @@ class Planner:
     def _score_fact(
         self,
         fact: str,
-        key: str,
         evidence: Dict,
-        payload: Dict,
         decision: Dict
     ) -> Tuple[float, str]:
 
@@ -312,9 +325,6 @@ class Planner:
 
         if score <= 0:
             score = 0.5
-
-        if payload.get(key) is not None and isinstance(payload.get(key), list):
-            score += 0.2
 
         return score, fact
 

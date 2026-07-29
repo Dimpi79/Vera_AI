@@ -7,6 +7,7 @@ def test_generates_plan_driven_message_with_clear_cta():
         "owner_name": "Asha",
         "cta": "Review the recommendation",
         "summary": "Your recent performance deserves attention.",
+        "facts": ["Your listing recently attracted 120 visits."],
         "evidence": {
             "trigger_kind": "perf_dip",
             "trigger_payload": {
@@ -31,3 +32,4 @@ def test_generates_plan_driven_message_with_clear_cta():
     assert "views" not in message.lower() and "ctr" not in message.lower()
     assert "keyword" not in message.lower()
     assert "price" not in message.lower()
+    assert "120 visits" in message

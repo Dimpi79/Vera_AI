@@ -82,9 +82,7 @@ def tick(req: TickRequest):
         if trigger is None:
             continue
 
-        merchant = context_db["merchant"].get(
-            trigger["merchant_id"]
-        )
+        merchant = context_db["merchant"].get(trigger.get("merchant_id"))
 
         if merchant is None:
             continue
@@ -96,9 +94,10 @@ def tick(req: TickRequest):
         if customer_id:
             customer = context_db["customer"].get(customer_id)
 
-        category = context_db["category"].get(
-            merchant["category_slug"]
-        )
+        category = context_db["category"].get(merchant.get("category_slug"))
+
+        if category is None:
+            continue
 
         context = {
             "category": category,
@@ -109,28 +108,21 @@ def tick(req: TickRequest):
 
         action = composer.compose(context)
 
-        if action:
+        if not action:
+            continue
 
-         conversation_id = (
-         f"{action['merchant_id']}:"
-         f"{action['trigger_id']}"
-        )
+        conversation_id = f"{action['merchant_id']}:{action['trigger_id']}"
+        conversation_memory[conversation_id] = {
+            "merchant_id": action["merchant_id"],
+            "trigger_id": action["trigger_id"],
+            "customer_id": action.get("customer_id"),
+            "last_action": action,
+            "state": "waiting"
+        }
+        action["conversation_id"] = conversation_id
+        actions.append(action)
 
-         conversation_memory[conversation_id] = {
-         "merchant_id": action["merchant_id"],
-         "trigger_id": action["trigger_id"],
-         "customer_id": action.get("customer_id"),
-         "last_action": action,
-         "state": "waiting"
-       }
-         print("Stored conversation:", conversation_id)
-         action["conversation_id"] = conversation_id
-
-         actions.append(action)
-
-         return {
-        "actions": actions
-       }
+    return {"actions": actions}
 
 
 @app.post("/v1/reply")
@@ -147,12 +139,6 @@ def reply(req: ReplyRequest):
     memory = conversation_memory.get(req.conversation_id)
 
     if memory is None:
-        for conv in conversation_memory.values():
-            if conv.get("merchant_id") == req.merchant_id:
-                memory = conv
-                break
-
-    if memory is None:
         memory = {
             "merchant_id": req.merchant_id,
             "trigger_id": None,
@@ -161,6 +147,9 @@ def reply(req: ReplyRequest):
             "state": "waiting"
         }
         conversation_memory[req.conversation_id] = memory
+
+    if memory.get("state") == "closed":
+        return {"action": "end"}
 
     text = req.message.lower().strip()
 
