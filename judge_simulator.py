@@ -25,7 +25,7 @@ Author: magicpin AI Challenge Team
 import os
 
 # Your bot's URL (where your bot is running)
-BOT_URL = "http://127.0.0.1:8000"
+BOT_URL = "https://vera-ai-4v14.onrender.com/"
 
 # Choose your LLM provider: "openai", "anthropic", "gemini", "deepseek", "groq", "ollama", "openrouter"
 LLM_PROVIDER = "gemini"
